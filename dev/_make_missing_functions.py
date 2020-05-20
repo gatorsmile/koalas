@@ -47,6 +47,7 @@ def inspect_missing_functions(original_type, target_type):
     missing = []
     deprecated = []
     modified = []
+    all = []
 
     for name, func in inspect.getmembers(original_type, inspect.isfunction):
         # Skip the private attributes
@@ -54,6 +55,8 @@ def inspect_missing_functions(original_type, target_type):
             continue
 
         original_signature = inspect.signature(func, follow_wrapped=True)
+
+        all.append((name, original_signature))
 
         if hasattr(target_type, name):
             f = getattr(target_type, name)
@@ -70,7 +73,7 @@ def inspect_missing_functions(original_type, target_type):
         else:
             missing.append((name, original_signature))
 
-    return missing, deprecated, modified
+    return missing, deprecated, modified, all
 
 
 def format_arguments(arguments, prefix_len, suffix_len):
@@ -230,22 +233,16 @@ def _main():
                                        (pd.core.groupby.SeriesGroupBy, SeriesGroupBy),
                                        (pd.Index, Index),
                                        (pd.MultiIndex, MultiIndex)]:
-        missing, deprecated, modified = inspect_missing_functions(original_type, target_type)
+        missing, deprecated, modified, all = inspect_missing_functions(original_type, target_type)
 
         print('MISSING functions for {}'.format(original_type.__name__))
         for name, signature in missing:
             # print(make_missing_function(original_type, name, signature))
             print("""    {0} = unsupported_function('{0}')""".format(name))
-
         print()
-        print('DEPRECATED functions for {}'.format(original_type.__name__))
-        for name, signature in deprecated:
-            print("""    {0} = unsupported_function('{0}', deprecated=True)""".format(name))
-
-        print()
-        print('MODIFIED functions for {}'.format(original_type.__name__))
-        for name, original, target in modified:
-            print(make_modified_function_def(original_type, name, original, target))
+        print('ALL functions for {}'.format(original_type.__name__))
+        for name, signature in all:
+            print("""    {0} = all_function('{0}')""".format(name))
         print()
 
 
